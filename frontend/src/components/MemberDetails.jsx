@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-function MemberDetails({ member, onClose, onSave, onDelete }) {
+function MemberDetails({ member, onClose, onSave, onDelete, canManage }) {
   const [editing, setEditing] = useState(false)
   const [formData, setFormData] = useState({})
   const [saving, setSaving] = useState(false)
@@ -36,6 +36,11 @@ function MemberDetails({ member, onClose, onSave, onDelete }) {
     event.preventDefault()
     setError('')
 
+    if (!canManage) {
+      setError('Admin access required.')
+      return
+    }
+
     if (
       !formData.name.trim() ||
       !formData.email.trim() ||
@@ -66,6 +71,11 @@ function MemberDetails({ member, onClose, onSave, onDelete }) {
   }
 
   async function handleDelete() {
+    if (!canManage) {
+      setError('Admin access required.')
+      return
+    }
+
     const confirmed = window.confirm(
       `Delete ${member.name}? This cannot be undone.`
     )
@@ -128,7 +138,7 @@ function MemberDetails({ member, onClose, onSave, onDelete }) {
 
         <div className="detail-divider" />
 
-        {editing ? (
+        {editing && canManage ? (
           <form className="add-member-form" onSubmit={handleSave}>
             <h3>Edit member</h3>
 
@@ -313,23 +323,25 @@ function MemberDetails({ member, onClose, onSave, onDelete }) {
               </p>
             )}
 
-            <div className="detail-actions">
-              <button
-                className="primary-button"
-                disabled={saving}
-                onClick={() => setEditing(true)}
-              >
-                Edit member
-              </button>
+            {canManage && (
+              <div className="detail-actions">
+                <button
+                  className="primary-button"
+                  disabled={saving}
+                  onClick={() => setEditing(true)}
+                >
+                  Edit member
+                </button>
 
-              <button
-                className="secondary-button"
-                disabled={saving}
-                onClick={handleDelete}
-              >
-                {saving ? 'Please wait...' : 'Delete member'}
-              </button>
-            </div>
+                <button
+                  className="secondary-button"
+                  disabled={saving}
+                  onClick={handleDelete}
+                >
+                  {saving ? 'Please wait...' : 'Delete member'}
+                </button>
+              </div>
+            )}
           </>
         )}
       </section>

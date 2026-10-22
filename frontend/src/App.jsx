@@ -17,7 +17,7 @@ import MemberDetails from './components/MemberDetails'
 
 const API_URL = 'http://localhost:8000'
 
-function Dashboard() {
+function Dashboard({ user }) {
   const [activePage, setActivePage] = useState('Overview')
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -46,6 +46,11 @@ function Dashboard() {
   const [formError, setFormError] = useState('')
   const [savingMember, setSavingMember] = useState(false)
   const membersPerPage = 3
+  const isAdmin = user.role === 'admin'
+  const visiblePage =
+    !isAdmin && activePage === 'Teams & SIGs'
+      ? 'Overview'
+      : activePage
 
   useEffect(() => {
     async function loadMembers() {
@@ -228,6 +233,8 @@ function Dashboard() {
   }
 
   async function handleSaveMember(id, updates) {
+    if (!isAdmin) throw new Error('Admin access required.')
+
     const updatedMember = await updateMember(id, updates)
 
     setMembers((previous) =>
@@ -240,6 +247,8 @@ function Dashboard() {
   }
 
   async function handleDeleteMember(id) {
+    if (!isAdmin) throw new Error('Admin access required.')
+
     await deleteMember(id)
 
     setMembers((previous) =>
@@ -250,6 +259,8 @@ function Dashboard() {
   }
 
   function handleAddMember() {
+    if (!isAdmin) return
+
     setFormError('')
     setNewMember({
       name: '',
@@ -318,16 +329,18 @@ function Dashboard() {
   return (
     <div className="app-layout">
       <Sidebar
-        activePage={activePage}
+        activePage={visiblePage}
+        user={user}
         onNavigate={setActivePage}
       />
 
       <main className="main-content">
         <DashboardHeader
-          activePage={activePage}
+          activePage={visiblePage}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onAddMember={handleAddMember}
+          canAddMember={isAdmin}
         />
 
         {error && (
@@ -338,7 +351,7 @@ function Dashboard() {
 
         {loading && <p>Loading members...</p>}
 
-        {activePage === 'Overview' && (
+        {visiblePage === 'Overview' && (
           <>
             <section className="stats-grid">
               {dashboardStats &&
@@ -359,7 +372,9 @@ function Dashboard() {
                     label: 'Teams & SIGs',
                     value: dashboardStats.total_teams,
                   },
-                ].map((stat, index) => (
+                ]
+                  .filter((stat) => isAdmin || stat.label !== 'Teams & SIGs')
+                  .map((stat, index) => (
                   <StatCard
                     key={stat.label}
                     stat={stat}
@@ -394,7 +409,7 @@ function Dashboard() {
           </>
         )}
 
-        {activePage === 'Members' && (
+        {visiblePage === 'Members' && (
           <section className="content-panel">
             <div className="panel-heading">
               <div>
@@ -562,7 +577,7 @@ function Dashboard() {
           </section>
         )}
 
-        {activePage === 'Teams & SIGs' && <SigDirectory />}
+        {isAdmin && visiblePage === 'Teams & SIGs' && <SigDirectory />}
 
         {showAddMember && (
           <div className="member-modal-backdrop">
@@ -738,6 +753,7 @@ function Dashboard() {
 
       <MemberDetails
         member={selectedMember}
+        canManage={isAdmin}
         onClose={() => setSelectedMember(null)}
         onSave={(updates) => {
           if (!selectedMember) return Promise.resolve()
@@ -980,7 +996,7 @@ function App() {
         </button>
       </div>
 
-      <Dashboard />
+      <Dashboard user={user} />
     </div>
   )
 }

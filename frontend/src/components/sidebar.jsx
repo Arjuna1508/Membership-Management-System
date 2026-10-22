@@ -5,7 +5,11 @@ const navigation = [
   { label: 'Teams & SIGs', symbol: '⌘' },
 ]
 
-function Sidebar({ activePage, onNavigate }) {
+function Sidebar({ activePage, onNavigate, user }) {
+  const visibleNavigation = navigation.filter(
+    (item) => user?.role === 'admin' || item.label !== 'Teams & SIGs'
+  )
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -19,7 +23,7 @@ function Sidebar({ activePage, onNavigate }) {
       <p className="nav-label">WORKSPACE</p>
 
       <nav className="navigation">
-        {navigation.map((item) => (
+        {visibleNavigation.map((item) => (
           <button
             key={item.label}
             className={`nav-item ${
@@ -48,8 +52,8 @@ function Sidebar({ activePage, onNavigate }) {
         <div className="profile">
           <div className="profile-avatar">AD</div>
           <div className="profile-info">
-            <strong>Admin User</strong>
-            <p>Administrator</p>
+            <strong>{user?.name || 'User'}</strong>
+            <p>{user?.role === 'admin' ? 'Administrator' : 'Member'}</p>
           </div>
           <span className="profile-menu">···</span>
         </div>

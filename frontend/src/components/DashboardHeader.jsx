@@ -4,6 +4,7 @@ function DashboardHeader({
   searchQuery,
   onSearchChange,
   onAddMember,
+  canAddMember,
 }) {
   const pageInfo = {
     Overview: {
@@ -43,9 +44,11 @@ function DashboardHeader({
           <kbd>/</kbd>
         </label>
 
-        <button className="primary-button" onClick={onAddMember}>
-          <span>+</span> Add member
-        </button>
+        {canAddMember && (
+          <button className="primary-button" onClick={onAddMember}>
+            <span>+</span> Add member
+          </button>
+        )}
       </div>
     </header>
   )
