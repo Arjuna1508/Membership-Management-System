@@ -3,12 +3,16 @@ import Sidebar from './components/sidebar'
 import DashboardHeader from './components/DashboardHeader'
 import StatCard from './components/Statcard'
 import MembersTable from './components/MembersTable'
-import { stats, members } from './data/mockData'
+import { stats } from './data/mockData'
+import { createMember, getMembers, updateMember,deleteMember} from './api'
 import './App.css'
 import MemberDetails from './components/MemberDetails'
 
 function App() {
   const [activePage, setActivePage] = useState('Overview')
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMember, setSelectedMember] = useState(null)
   const [teamFilter, setTeamFilter] = useState('')
@@ -18,8 +22,36 @@ function App() {
   const [statusFilter, setStatusFilter] = useState('')
   const [sortBy, setSortBy] = useState('name')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [newMember, setNewMember] = useState({
+    name: '',
+    email: '',
+    department: '',
+    year: '',
+    designation: '',
+    team: '',
+    date_joined: new Date().toISOString().slice(0, 10),
+    membership_status: 'Active',
+  })
+  const [formError, setFormError] = useState('')
+  const [savingMember, setSavingMember] = useState(false)
   const membersPerPage = 3
+  
+  useEffect(() => {
+  async function loadMembers() {
+    try {
+      const data = await getMembers()
+      setMembers(data)
+      setError('')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
+  loadMembers()
+  }, [])
   const filteredMembers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
 
@@ -38,14 +70,13 @@ function App() {
         member.status,
       ].some((value) => String(value ?? '').toLowerCase().includes(query))
     )
-  }, [searchQuery])
+  }, [members,searchQuery])
 
   const filterOptions = useMemo(() => {
     const valuesFor = (field) =>
-      [...new Set(members.map((member) => member[field]).filter(Boolean))].sort(
-        (a, b) => a.localeCompare(b)
-      )
-
+    [...new Set(members.map((member) => member[field]).filter(Boolean))]
+    .map(String)
+    .sort((a, b) => a.localeCompare(b))
     return {
       teams: valuesFor('team'),
       designations: valuesFor('designation'),
@@ -53,14 +84,14 @@ function App() {
       years: valuesFor('year'),
       statuses: valuesFor('status'),
     }
-  }, [])
+  }, [members])
 
   const directoryMembers = useMemo(() => {
     const matchesFilters = filteredMembers.filter((member) =>
       (!teamFilter || member.team === teamFilter) &&
       (!designationFilter || member.designation === designationFilter) &&
       (!departmentFilter || member.department === departmentFilter) &&
-      (!yearFilter || member.year === yearFilter) &&
+      (!yearFilter || String(member.year) === yearFilter) &&
       (!statusFilter || member.status === statusFilter)
     )
 
@@ -140,9 +171,88 @@ function App() {
     setSortBy('name')
     setCurrentPage(1)
   }
+  
+  async function handleSaveMember(id, updates) {
+    const updatedMember = await updateMember(id, updates)
+
+    setMembers((previous) =>
+      previous.map((member) =>
+        member.id === id ? updatedMember : member
+      )
+    )
+
+    setSelectedMember(updatedMember)
+  }
+
+  async function handleDeleteMember(id) {
+    await deleteMember(id)
+
+    setMembers((previous) =>
+      previous.filter((member) => member.id !== id)
+    )
+
+    setSelectedMember(null)
+  }
 
   function handleAddMember() {
-    window.alert('The Add Member form will be implemented next.')
+    setFormError('')
+    setNewMember({
+    name: '',
+    email: '',
+    department: '',
+    year: '',
+    designation: '',
+    team: '',
+    date_joined: new Date().toISOString().slice(0, 10),
+    membership_status: 'Active',
+  })
+  setShowAddMember(true)
+  }
+  
+  
+  async function handleSubmitMember(event) {
+    event.preventDefault()
+    setFormError('')
+
+    if (!newMember.name.trim() || !newMember.email.trim() ||
+        !newMember.department.trim() || !newMember.year) {
+      setFormError('Please fill in name, email, department, and year.')
+      return
+    }
+
+    setSavingMember(true)
+
+    try {
+      const createdMember = await createMember({
+        ...newMember,
+        name: newMember.name.trim(),
+        email: newMember.email.trim(),
+        department: newMember.department.trim(),
+        year: Number(newMember.year),
+        designation: newMember.designation.trim() || null,
+        team: newMember.team.trim() || null,
+      })
+
+      setMembers((previous) => [createdMember, ...previous])
+      setShowAddMember(false)
+      setSelectedMember(null)
+      setActivePage('Members')
+      setCurrentPage(1)
+      setNewMember({
+        name: '',
+        email: '',
+        department: '',
+        year: '',
+        designation: '',
+        team: '',
+        date_joined: new Date().toISOString().slice(0, 10),
+        membership_status: 'Active',
+      })
+    } catch (err) {
+      setFormError(err.message || 'Could not create member.')
+    } finally {
+      setSavingMember(false)
+    }
   }
 
   return (
@@ -291,17 +401,162 @@ function App() {
           </section>
         )}
 
+        
+{showAddMember && (
+  <div className="member-modal-backdrop">
+    <section
+      className="member-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-member-title"
+    >
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">MEMBERSHIP</p>
+          <h3 id="add-member-title">Add member</h3>
+        </div>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => setShowAddMember(false)}
+        >
+          Cancel
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmitMember} className="add-member-form">
+        <label>
+          Full name *
+          <input
+            required
+            value={newMember.name}
+            onChange={(e) =>
+              setNewMember({ ...newMember, name: e.target.value })
+            }
+          />
+        </label>
+
+        <label>
+          Email *
+          <input
+            required
+            type="email"
+            value={newMember.email}
+            onChange={(e) =>
+              setNewMember({ ...newMember, email: e.target.value })
+            }
+          />
+        </label>
+
+        <label>
+          Department *
+          <input
+            required
+            placeholder="e.g. EEE"
+            value={newMember.department}
+            onChange={(e) =>
+              setNewMember({ ...newMember, department: e.target.value })
+            }
+          />
+        </label>
+
+        <label>
+          Year *
+          <select
+            required
+            value={newMember.year}
+            onChange={(e) =>
+              setNewMember({ ...newMember, year: e.target.value })
+            }
+          >
+            <option value="">Select year</option>
+            <option value="1">1st year</option>
+            <option value="2">2nd year</option>
+            <option value="3">3rd year</option>
+            <option value="4">4th year</option>
+          </select>
+        </label>
+
+        <label>
+          Designation
+          <input
+            value={newMember.designation}
+            onChange={(e) =>
+              setNewMember({ ...newMember, designation: e.target.value })
+            }
+          />
+        </label>
+
+        <label>
+          Team
+          <input
+            value={newMember.team}
+            onChange={(e) =>
+              setNewMember({ ...newMember, team: e.target.value })
+            }
+          />
+        </label>
+
+        <label>
+          Date joined
+          <input
+            type="date"
+            value={newMember.date_joined}
+            onChange={(e) =>
+              setNewMember({ ...newMember, date_joined: e.target.value })
+            }
+          />
+        </label>
+
+        <label>
+          Membership status
+          <select
+            value={newMember.membership_status}
+            onChange={(e) =>
+              setNewMember({
+                ...newMember,
+                membership_status: e.target.value,
+              })
+            }
+          >
+            <option value="Active">Active</option>
+            <option value="Pending">Pending</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </label>
+
+        {formError && (
+          <p role="alert" className="form-error">{formError}</p>
+        )}
+
+        <button
+          type="submit"
+          className="primary-button"
+          disabled={savingMember}
+        >
+          {savingMember ? 'Saving...' : 'Save member'}
+        </button>
+      </form>
+    </section>
+  </div>
+)}
+
+
         <footer className="app-footer">
           <span>MemberHub · ACM NITK</span>
           <span>Membership management</span>
         </footer>
           </main>
+        <MemberDetails
+          member={selectedMember}
+          onClose={() => setSelectedMember(null)}
+          onSave={(updates) => {
+            if (!selectedMember) return Promise.resolve()
+            return handleSaveMember(selectedMember.id, updates)
+          }}
+          onDelete={handleDeleteMember}
+        />
 
-
-            <MemberDetails
-              member={selectedMember}
-              onClose={() => setSelectedMember(null)}
-            />
     </div>
   )
 }
