@@ -1094,3 +1094,186 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* SIG directory */
+.sig-page {
+  display: grid;
+  gap: 24px;
+}
+
+.sig-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 26px 26px;
+}
+
+.sig-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #e9e6df;
+  border-radius: 10px;
+  background: #fffefa;
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.sig-card:hover {
+  border-color: #d4b6a4;
+  transform: translateY(-2px);
+}
+
+.sig-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sig-card .teams-icon {
+  margin: 0;
+}
+
+.sig-count {
+  padding: 6px 9px;
+  border-radius: 20px;
+  background: #eaf3e9;
+  color: #43764b;
+  font-size: 11px;
+}
+
+.sig-card h3 {
+  margin: 18px 0 8px;
+  font-size: 18px;
+}
+
+.sig-description,
+.sig-lead {
+  color: #85867e;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.sig-description {
+  min-height: 40px;
+}
+
+.sig-lead strong {
+  color: #30312c;
+}
+
+.sig-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.sig-card-actions .secondary-button {
+  min-height: 35px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.sig-delete {
+  color: #a63232;
+}
+
+.sig-form-panel {
+  padding-bottom: 24px;
+}
+
+.sig-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 16px;
+  padding: 0 26px;
+}
+
+.sig-form label,
+.sig-filter {
+  display: grid;
+  gap: 7px;
+  color: #777970;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sig-form input,
+.sig-form select,
+.sig-filter select {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 11px;
+  border: 1px solid #e5e2db;
+  border-radius: 8px;
+  background: #fffefa;
+  color: #30312c;
+  font: inherit;
+  font-weight: 400;
+  box-sizing: border-box;
+}
+
+.sig-form input:focus,
+.sig-form select:focus,
+.sig-filter select:focus {
+  outline: 2px solid #bd704e;
+  outline-offset: 1px;
+}
+
+.sig-form > .primary-button {
+  min-height: 42px;
+}
+
+.sig-message {
+  margin: 0 26px 18px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.sig-error {
+  background: #fbe9e7;
+  color: #a32d24;
+}
+
+.sig-success {
+  background: #eaf3e9;
+  color: #356a3c;
+}
+
+.sig-feedback {
+  padding: 35px 20px;
+  color: #85867e;
+  text-align: center;
+  font-size: 13px;
+}
+
+.sig-feedback h3 {
+  color: #30312c;
+}
+
+.sig-filter {
+  min-width: 160px;
+}
+
+@media (max-width: 760px) {
+  .sig-grid {
+    grid-template-columns: 1fr;
+    padding: 0 16px 18px;
+  }
+
+  .sig-form {
+    grid-template-columns: 1fr;
+    padding: 0 16px;
+  }
+
+  .sig-message {
+    margin-right: 16px;
+    margin-left: 16px;
+  }
+}

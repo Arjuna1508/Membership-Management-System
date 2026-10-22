@@ -32,7 +32,7 @@ function MembersTable({ members, onSelectMember }) {
               <td>
                 <div className="member-cell">
                   <div className="member-avatar">
-                    {member.initials}
+                    {member.initials ?? member.name?.split(/\s+/).map((part) => part[0]).join('').toUpperCase() ?? '?'}
                   </div>
 
                   <div className="member-details">
@@ -56,10 +56,10 @@ function MembersTable({ members, onSelectMember }) {
 
               <td>
                 <span
-                  className={`status-badge ${member.status.toLowerCase()}`}
+                  className={`status-badge ${(member.status ?? member.membership_status ?? 'Active').toLowerCase()}`}
                 >
                   <span className="status-dot" />
-                  {member.status}
+                  {member.status ?? member.membership_status ?? 'Active'}
                 </span>
               </td>
 
@@ -70,7 +70,7 @@ function MembersTable({ members, onSelectMember }) {
           ))}
 
           {members.length === 0 && (
-            <tr>
+              <tr key="empty-state">
               <td colSpan={7} className="empty-state">
                 <strong>No members found</strong>
                 <span>Try changing your search or filters, or select Clear all.</span>
